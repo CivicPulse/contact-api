@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: contact-api
+  namespace: civpulse-dev
 spec:
   selector:
     app: contact-api
