@@ -1,0 +1,14 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: contact-api
+  namespace: civpulse-dev
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`contact.civpulse.org`)
+      kind: Rule
+      services:
+        - name: contact-api
+          port: 8000

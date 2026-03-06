@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: contact-api
+  namespace: civpulse-dev
   labels:
     app: contact-api
 spec:
@@ -14,9 +15,21 @@ spec:
       labels:
         app: contact-api
     spec:
+      initContainers:
+        - name: migrate
+          image: contact-api:latest
+          imagePullPolicy: Never
+          command: ["uv", "run", "python", "main.py", "db", "upgrade"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: contact-api-secret
+                  key: DATABASE_URL
       containers:
         - name: contact-api
           image: contact-api:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
           env:
