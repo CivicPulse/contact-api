@@ -17,8 +17,8 @@ spec:
     spec:
       initContainers:
         - name: migrate
-          image: contact-api:latest
-          imagePullPolicy: Never
+          image: ghcr.io/civicpulse/contact-api:latest
+          imagePullPolicy: Always
           command: ["uv", "run", "python", "main.py", "db", "upgrade"]
           env:
             - name: DATABASE_URL
@@ -28,8 +28,8 @@ spec:
                   key: DATABASE_URL
       containers:
         - name: contact-api
-          image: contact-api:latest
-          imagePullPolicy: Never
+          image: ghcr.io/civicpulse/contact-api:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           env:
