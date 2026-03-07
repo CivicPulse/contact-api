@@ -8,7 +8,7 @@ spec:
     - web
   routes:
     - kind: Rule
-      match: Host(`<TAILSCALE_HOST>`) && PathPrefix(`/argocd`)
+      match: Host(`${TAILSCALE_HOST}`) && PathPrefix(`/argocd`)
       services:
         - name: argocd-server
           port: 80

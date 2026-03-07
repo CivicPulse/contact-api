@@ -55,6 +55,12 @@ Pushes to `main` trigger `.github/workflows/build-push.yaml`, which:
 2. Runs a `deploy` job that patches both image lines in `k8s/deployment.yaml` with the pinned `sha-` tag and commits `[skip ci]` back to `main`
 3. ArgoCD (namespace `argocd`) polls `k8s/` every ~3 minutes and auto-syncs to the cluster (`civpulse-dev` namespace)
 
-ArgoCD UI is exposed at `/argocd` on the Tailscale node via Traefik (Tailscale only). Update `<TAILSCALE_HOST>` in `argocd/ingress.yaml` to your actual Tailscale hostname before applying. Application manifest is `argocd/contact-api-app.yaml`; its IngressRoute is `argocd/ingress.yaml` (kept outside `k8s/` so ArgoCD doesn't manage itself).
+ArgoCD UI is exposed at `/argocd` on the Tailscale node via Traefik (Tailscale only). `argocd/ingress.yaml` uses a `$TAILSCALE_HOST` placeholder — apply it with `envsubst`:
+
+```bash
+TAILSCALE_HOST=<your-node>.ts.net envsubst < argocd/ingress.yaml | kubectl apply -f -
+```
+
+Application manifest is `argocd/contact-api-app.yaml`; its IngressRoute is `argocd/ingress.yaml` (kept outside `k8s/` so ArgoCD doesn't manage itself).
 
 **`[skip ci]` gotcha:** GitHub Actions skans the entire squash-merge commit message body for `[skip ci]`. If a PR description contains that text literally (e.g., describing the deploy job), the merge commit will skip CI. Rephrase or escape the text in PR bodies.
