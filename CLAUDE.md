@@ -38,7 +38,23 @@ The entrypoint is `main.py` — a **Typer CLI** with two commands: `serve` (laun
 ## Key Constraints
 
 - `email-validator` (via `pydantic[email]`) is required for `EmailStr` — it is a declared dependency.
-- `ContactCreate` enforces that at least one of `email` or `phone` is provided via a `model_validator`.
+- `ContactCreate` enforces that at least one of `email` or `phone` is provided via a `model_validator`. All string fields are sanitized (control chars stripped) by `field_validator`s in `app/schemas/contact.py`.
 - The `POST /api/v1/contacts` endpoint reads `X-Forwarded-For` before falling back to `request.client.host` for accurate IP capture behind a k8s ingress.
 - The alembic migration (`alembic/versions/0001_*.py`) runs `CREATE EXTENSION IF NOT EXISTS pgcrypto` to enable `gen_random_uuid()`.
 - The k8s `secret.yaml` is a **template only** — never commit real values.
+- CORS allows `*.civpulse.org`, `*.votehatcher.com`, `*.kerryhatcher.com`, and `localhost` (any port) via `allow_origin_regex` in `app/main.py`.
+
+## Tests
+
+There are currently no tests in this repo. The dev dependencies (`pytest`, `pytest-asyncio`, `httpx`) are declared but no test files exist yet. Use `httpx.AsyncClient` with `asgi_transport` to test the FastAPI app without a real database.
+
+## GitOps / Deployment
+
+Pushes to `main` trigger `.github/workflows/build-push.yaml`, which:
+1. Builds and pushes the image to GHCR with tags `sha-<7-char-sha>` and `latest`
+2. Runs a `deploy` job that patches both image lines in `k8s/deployment.yaml` with the pinned `sha-` tag and commits `[skip ci]` back to `main`
+3. ArgoCD (namespace `argocd`) polls `k8s/` every ~3 minutes and auto-syncs to the cluster (`civpulse-dev` namespace)
+
+ArgoCD UI is exposed at `/argocd` on the Tailscale node via Traefik (Tailscale only). Update `<TAILSCALE_HOST>` in `argocd/ingress.yaml` to your actual Tailscale hostname before applying. Application manifest is `argocd/contact-api-app.yaml`; its IngressRoute is `argocd/ingress.yaml` (kept outside `k8s/` so ArgoCD doesn't manage itself).
+
+**`[skip ci]` gotcha:** GitHub Actions skans the entire squash-merge commit message body for `[skip ci]`. If a PR description contains that text literally (e.g., describing the deploy job), the merge commit will skip CI. Rephrase or escape the text in PR bodies.
