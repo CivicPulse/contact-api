@@ -55,8 +55,9 @@ jobs:
       - name: Update image tag in manifests
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          IMAGE="ghcr.io/${{ github.repository }}:sha-${SHORT_SHA}"
-          sed -i "s|image: ghcr.io/civicpulse/contact-api:.*|image: ${IMAGE}|g" k8s/deployment.yaml
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE="ghcr.io/${REPO}:sha-${SHORT_SHA}"
+          sed -i "s|image: ghcr.io/${REPO}:.*|image: ${IMAGE}|g" k8s/deployment.yaml
 
       - name: Commit and push
         run: |
